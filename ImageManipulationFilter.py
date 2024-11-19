@@ -31,7 +31,7 @@ def display_dst(delay):
 def main(argv):
     cv2.namedWindow(window_name)
 
-    image_name = argv[0] if len(argv) == 1 else 'european-shorthair-8601492_640.jpg'
+    image_name = argv[0] if len(argv) == 1 else 'european-shorthair.jpg'
 
     global src
 
