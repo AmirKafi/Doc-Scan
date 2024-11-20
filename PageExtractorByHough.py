@@ -1,8 +1,14 @@
 import cv2
 import numpy as np
 
+from pre_processors.Denoiser import Denoiser
+from pre_processors.HSVFilter import HSVFilter
+from pre_processors.OtsuThresholder import OtsuThresholder
+from pre_processors.Resizer import Resizer
+from processors.HoughLineCornerDetector import HoughLineCornerDetector
 
-class PageExtractor:
+
+class PageExtractorByHough:
     def __init__(self,pre_processors,corner_detector,output_process = False):
         assert isinstance(pre_processors,list),"pre_processors must be a list"
 
@@ -14,7 +20,7 @@ class PageExtractor:
     def __call__(self,image_path):
         # Read the imagee from path
         self._image = cv2.imread(image_path)
-
+        self._image = cv2.cvtColor(self._image, cv2.COLOR_BGR2HSV)
         # Processed image that at first is just original image
         self._processed = self._image
 
@@ -100,4 +106,28 @@ class PageExtractor:
 
 
 
+if __name__ == "__main__":
+    page_extractor = PageExtractorByHough(
+        pre_processors = [
+            HSVFilter(output_process=True),
+            Resizer(height = 1280, output_process = True),
+            Denoiser(strength = 8, output_process = True),
+            OtsuThresholder(output_process = True)
+        ],
+        corner_detector = HoughLineCornerDetector(
+            rho_acc=1,
+            theta_acc=180,
+            thresh=100,
+            output_process = True
+        )
+    )
+    # extracted = page_extractor('assets/photo_2024-11-20_12-47-14.jpg')
+    extracted = page_extractor('assets/photo_2024-11-20_17-16-00.jpg')
+    # extracted = page_extractor('assets/QalamChi.jpg')
+    denoise = Denoiser()
+    ex = denoise(extracted)
+    cv2.imshow('denoised',ex)
 
+    cv2.imwrite("output/output.jpg", extracted)
+    cv2.imshow("Extracted page", extracted)
+    cv2.waitKey(0)

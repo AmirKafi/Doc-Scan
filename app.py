@@ -1,17 +1,13 @@
 import cv2
+import numpy as np
 
-img = cv2.imread(cv2.samples.findFile('assets/photo_2024-11-20_17-16-00.jpg'))
+from processors.ContourCornersDetector import ContourCornersDetector
 
-# High-Contrast with Clahe
-img_clahe = cv2.imread(cv2.samples.findFile('assets/photo_2024-11-20_17-16-00.jpg'),cv2.IMREAD_GRAYSCALE)
-clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
-img_clahe = clahe.apply(img_clahe)
+contour_page_extractor = ContourCornersDetector()
 
-# Color-Based Segmentation
-hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-
-cv2.imshow('HSV',hsv_img)
-cv2.imshow('CLAHE',img_clahe)
-cv2.imshow('Original', img)
+img = cv2.imread('assets/QalamChi.jpg')
+final = contour_page_extractor(img)
+cv2.imshow('original', img)
+cv2.imshow('final', final)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
