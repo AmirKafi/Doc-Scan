@@ -9,51 +9,54 @@ from pre_processors.Resizer import Resizer
 
 class ContourCornersDetector:
 
-    def __call__(self,image):
-        self.image = image
-        self.original_image = image
+    def __call__(self, image):
 
         # Step 1 : If it's big , make it small
         dim_limit = 1080
         max_dim = max(image.shape)
         if max_dim > dim_limit:
-            resizer = Resizer(dim_limit,True)
-            self.image = resizer(image)
+            resizer = Resizer(dim_limit, True)
+            image = resizer(image)
+
+        self.org_img = image.copy()
+        processed_img = image
+
+        cv2.imwrite('output/Resized_img.jpg', processed_img)
 
         # Step 2 : Perform Morphology
         closer = Closer(output_process=True)
-        self.image = closer(self.image)
+        processed_img = closer(processed_img)
+
+        cv2.imwrite('output/Closer_img.jpg', processed_img)
 
         # Step 3: Grab Cut
         grab_cut = GrabCut(output_process=True)
-        self.image = grab_cut(image = self.image)
+        processed_img = grab_cut(processed_img)
+
+        cv2.imwrite('output/GrabCut_img.jpg', processed_img)
 
         # Step 4: Edge Detect
         edge = EdgeDetector(True)
-        self.image = edge(self.image)
+        canny = edge(processed_img)
+
+        cv2.imwrite('output/EdgeDetector_img.jpg', processed_img)
 
         # Step 5: Detecting Contour
-        self.image = self.detect_biggest_contour(self.image)
+        # Gets the canny image to get contour
+        page = self.detect_biggest_contour(canny)
 
         # Step 6: Finding Corners
-        corners = self.calc_contour_corners(self.image)
+        # Gets extracted contour to get its corners
+        corners = self.calc_contour_corners(page)
 
         # Step 7: Destination Corners
-
         destination_corners = self.find_dst(corners)
 
-        h, w = self.original_image.shape[:2]
-
-        # Getting the homography.
-        M = cv2.getPerspectiveTransform(np.float32(corners), np.float32(destination_corners))
-
-        # Perspective transform using homography.
-        final = cv2.warpPerspective(self.original_image, M, (destination_corners[2][0], destination_corners[2][1]),
-                                    flags=cv2.INTER_LINEAR)
+        final = self.perspective_transform(self.org_img, corners, destination_corners)
 
         return final
 
-    def find_dst(self,points):
+    def find_dst(self, points):
         (tl, tr, br, bl) = points
         # Finding the maximum width.
         width_a = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
@@ -102,13 +105,13 @@ class ContourCornersDetector:
 
         return page
 
-    def calc_contour_corners(self,page):
+    def calc_contour_corners(self, page):
 
         # Detecting Edges through Contour approximation.
         # Loop over the contours.
         corners = []
         if len(page) == 0:
-            return self.original_image
+            return self.org_img
 
         for c in page:
             # Approximate the contour.
@@ -124,3 +127,16 @@ class ContourCornersDetector:
         corners = self.order_points(corners)
 
         return corners
+
+    def perspective_transform(self,org_img, corners,destination_corners):
+        h, w = org_img.shape[:2]
+
+        # Getting the homography.
+        M = cv2.getPerspectiveTransform(np.float32(corners), np.float32(destination_corners))
+
+        # Perspective transform using homography.
+        final = cv2.warpPerspective(org_img, M, (destination_corners[2][0], destination_corners[2][1]),
+                                    flags=cv2.INTER_LINEAR)
+
+        cv2.imwrite('output/Perspective_transform_img.jpg', final)
+        return final
