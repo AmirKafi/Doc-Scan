@@ -29,9 +29,6 @@ class HoughLineCornerDetector:
         # Step 2: Get hough lines
         self._lines = self._get_hough_lines()
 
-        # Step 3: Fix the angle
-        self._image = self._correct_skew(self._lines)
-
         # Step 4: Get intersection points
         self._intersections = self._get_intersections()
 
@@ -39,33 +36,6 @@ class HoughLineCornerDetector:
         return self._find_quadrilaterals()
 
 
-    def _correct_skew(self, lines):
-        if lines is None:
-            return self._image
-
-        # Calculate angles of the lines
-        angles = []
-        for line in lines:
-            rho, theta = line[0]
-            angle = (theta - np.pi / 2) * (180 / np.pi)  # Convert to degrees
-            angles.append(angle)
-
-        # Compute the median angle
-        if angles:
-            median_angle = np.median(angles)
-        else:
-            return self._image  # No lines to correct
-
-        # Rotate the image to deskew
-        h, w = self._image.shape[:2]
-        center = (w // 2, h // 2)
-        rotation_matrix = cv2.getRotationMatrix2D(center, -median_angle, 1.0)
-        deskewed_image = cv2.warpAffine(self._image, rotation_matrix, (w, h))
-
-        if self.output_process:
-            cv2.imwrite('output/deskewed_image.jpg', deskewed_image)
-
-        return deskewed_image
 
     def _get_hough_lines(self):
         lines = cv2.HoughLines(
