@@ -33,6 +33,6 @@ class GrabCut:
         # Step 6: Resize back to original size
         segmented_img = cv2.resize(segmented_small_img, (original_size[1], original_size[0]))
 
-        if self.output_process: cv2.imwrite('assets/GrabCut.jpg', segmented_img)
+        if self.output_process: cv2.imwrite('output/GrabCut.jpg', segmented_img)
 
         return segmented_img
