@@ -6,10 +6,10 @@ from OMR.utils import find_rectangles, correct_rows_position, dump_result
 
 start = time.time()
 
-file_name = 'Scan_0012'
+file_name = 'QalamChi'
 
 # Load the image
-image = cv2.imread(f"assets/{file_name}.jpg")
+image = cv2.imread(f"output/{file_name}.jpg")
 gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
 # Preprocessing: Adaptive thresholding

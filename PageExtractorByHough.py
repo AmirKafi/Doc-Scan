@@ -76,8 +76,6 @@ class PageExtractorByHough:
         m = cv2.getPerspectiveTransform(rect,dst)
         wrapped = cv2.warpPerspective(self._processed, m, (max_width,max_height))
 
-        if self.output_process: cv2.imwrite('output/desktop_viewed.jpg',wrapped)
-
         return wrapped
 
     def _order_points(self, pts):

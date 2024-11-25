@@ -13,5 +13,4 @@ class Resizer:
         width = int(image.shape[1] * ratio)
         dim = (width, self._height)
         resized = cv2.resize(image, dim, interpolation=cv2.INTER_AREA)
-        if self.output_process: cv2.imwrite('output/resized.jpg', resized)
         return resized

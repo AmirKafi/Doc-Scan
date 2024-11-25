@@ -10,5 +10,4 @@ class EdgeDetector:
         gray = cv2.GaussianBlur(gray, (11, 11), 0)
         canny = cv2.Canny(gray, thresh1, thresh2, apertureSize=aperture_size)
         canny = cv2.dilate(canny, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)))
-        if self.output_process:cv2.imwrite('output/edges.jpg',canny)
         return canny

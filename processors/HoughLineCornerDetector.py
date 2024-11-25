@@ -69,8 +69,6 @@ class HoughLineCornerDetector:
                 2
             )
 
-        cv2.imwrite('output/hough_line.jpg', hough_line_output)
-
     def _get_intersections(self):
         """Finds the intersections between groups of lines."""
         lines = self._lines
@@ -202,8 +200,6 @@ class HoughLineCornerDetector:
                 (255, 255, 127),
                 5
             )
-
-        cv2.imwrite('output/intersection_point_output.jpg', intersection_point_output)
 
     def _get_color_image(self):
         return cv2.cvtColor(self._image.copy(), cv2.COLOR_GRAY2RGB)

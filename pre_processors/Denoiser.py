@@ -9,5 +9,4 @@ class Denoiser:
 
     def __call__(self,image):
         temp = cv2.fastNlMeansDenoising(image,h = self.strength)
-        if self.output_process:cv2.imwrite('output/denoised.jpg',temp)
         return temp
