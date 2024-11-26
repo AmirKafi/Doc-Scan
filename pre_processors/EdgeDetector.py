@@ -2,8 +2,6 @@ import cv2
 
 
 class EdgeDetector:
-    def __init__(self,output_process=False):
-        self.output_process = output_process
 
     def __call__(self,image,thresh1=0,thresh2=200,aperture_size=3):
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)

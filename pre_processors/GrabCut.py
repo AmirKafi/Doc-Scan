@@ -2,9 +2,6 @@ import cv2
 import numpy as np
 
 class GrabCut:
-    def __init__(self,output_process = False):
-        self.output_process = output_process
-
     def __call__(self,img):
         rect = None
         downscale_factor = 2

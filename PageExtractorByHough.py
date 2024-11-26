@@ -107,16 +107,15 @@ class PageExtractorByHough:
 if __name__ == "__main__":
     page_extractor = PageExtractorByHough(
         pre_processors = [
-            HSVFilter(output_process=True),
-            Resizer(height = 1280, output_process = True),
-            Denoiser(strength = 8, output_process = True),
-            OtsuThresholder(output_process = True)
+            HSVFilter(),
+            Resizer(height = 1280),
+            Denoiser(strength = 8),
+            OtsuThresholder()
         ],
         corner_detector = HoughLineCornerDetector(
             rho_acc=1,
             theta_acc=180,
-            thresh=100,
-            output_process = True
+            thresh=100
         )
     )
     # extracted = page_extractor('assets/photo_2024-11-20_12-47-14.jpg')

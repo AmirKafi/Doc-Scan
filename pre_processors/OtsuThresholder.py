@@ -1,8 +1,7 @@
 import cv2
 
 class OtsuThresholder:
-    def __init__(self, thresh1 = 0, thresh2 = 255, output_process = False):
-        self.output_process = output_process
+    def __init__(self, thresh1 = 0, thresh2 = 255):
         self.thresh1 = thresh1
         self.thresh2 = thresh2
 

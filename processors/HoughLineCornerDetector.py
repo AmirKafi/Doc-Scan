@@ -10,14 +10,13 @@ from pre_processors.EdgeDetector import EdgeDetector
 
 
 class HoughLineCornerDetector:
-    def __init__(self, rho_acc=2, theta_acc=360, thresh=100, output_process=True):
+    def __init__(self, rho_acc=2, theta_acc=360, thresh=100):
         self.rho_acc = rho_acc
         self.theta_acc = theta_acc
         self.thresh = thresh
-        self.output_process = output_process
         self._preprocessor = [
-            Closer(output_process=output_process),
-            EdgeDetector(output_process=output_process)
+            Closer(),
+            EdgeDetector()
         ]
 
     def __call__(self, image):
@@ -44,8 +43,6 @@ class HoughLineCornerDetector:
             np.pi / self.theta_acc,
             self.thresh
         )
-        if self.output_process: self._draw_hough_lines(lines)
-
         return lines
 
     def _draw_hough_lines(self, lines):
@@ -86,8 +83,6 @@ class HoughLineCornerDetector:
                 if x_in_range(int_point[0][0]) and y_in_range(int_point[0][1]):
                     intersections.append(int_point)
 
-        if self.output_process: self._draw_intersections(intersections)
-
         return intersections
 
     def _find_quadrilaterals(self):
@@ -99,8 +94,6 @@ class HoughLineCornerDetector:
             n_init=10,
             random_state=0
         ).fit(X)
-
-        if self.output_process: self._draw_quadrilaterals(self._lines, kmeans)
 
         return [[center.tolist()] for center in kmeans.cluster_centers_]
 

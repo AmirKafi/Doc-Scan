@@ -1,11 +1,11 @@
 import cv2
 
+
 class Resizer:
     """Resizes image"""
 
-    def __init__(self, height=1280, output_process=False):
+    def __init__(self, height=1280):
         self._height = height
-        self.output_process = output_process
 
     def __call__(self, image):
         if image.shape[0] <= self._height: return image

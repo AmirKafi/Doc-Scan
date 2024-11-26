@@ -10,23 +10,17 @@ class ContourCornersDetector:
 
     def __call__(self, image):
 
-        # Step 1 : If it's big , make it small for better performance
-        dim_limit = 1080
-        max_dim = max(image.shape)
-        if max_dim > dim_limit:
-            resizer = Resizer(dim_limit, True)
-            image = resizer(image)
 
-        # Make a copy and send the copy through process
         self.org_img = image.copy()
+        # Make a copy and send the copy through process
         processed_img = image
 
         # Step 3: Grab Cut
-        grab_cut = GrabCut(output_process=True)
+        grab_cut = GrabCut()
         processed_img = grab_cut(processed_img)
 
         # Step 4: Edge Detect
-        edge = EdgeDetector(True)
+        edge = EdgeDetector()
         canny = edge(processed_img)
 
         # Step 5: Detecting Contour
