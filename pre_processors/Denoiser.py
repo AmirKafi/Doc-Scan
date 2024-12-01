@@ -2,7 +2,7 @@ import cv2
 
 
 class Denoiser:
-    def __init__(self,strength = 7):
+    def __init__(self,strength = 9):
         self.strength = strength
 
 

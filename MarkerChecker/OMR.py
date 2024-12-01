@@ -1,4 +1,5 @@
 import json
+import random
 from collections import OrderedDict
 from typing import List, Tuple
 from typing import Set, Any
@@ -6,118 +7,79 @@ from typing import Set, Any
 import cv2
 import numpy as np
 
+from Configs.config import ANSWER_COL_WIDTH, ANSWERS_COL_X_COORDINATE, DOC_WIDTH, DOC_HEIGHT, BOUNDED_BOX_MIN_AREA, \
+    BOUNDED_BOX_MAX_AREA, DIS_BETWEEN_BOUNDED_BOXES
 
-def start_process(file_path: str):
-    image = cv2.imread(file_path)
 
+def start_process(raw_bird_eye_view_img):
     # First Grayscale it
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(raw_bird_eye_view_img, cv2.COLOR_BGR2GRAY)
 
     # then make it binary
-    _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
-
-    # Then Blur it
-    blurred = cv2.GaussianBlur(binary, (5, 5), 0)
-
-    # And Then Create a Canny
-    edges = cv2.Canny(blurred, 50, 150)
+    _, binary = cv2.threshold(gray, 0, 240, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
 
     # The Rectangles on the sides
-    bounded_boxes = find_rectangles(binary)
+    bounded_boxes, raw_bird_eye_view_img = find_rectangles(binary, raw_bird_eye_view_img)
 
-    col_contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    height, width = binary.shape[:2]
 
-    target_width = 1430
-    target_height = 1650
     # Initialize a list for detected rows within columns
     detected_columns: Set[Tuple[int, int, int, int]] = set()
     # Loop through contours to find the large rectangle
-    for col_contour in col_contours:
-        epsilon = 0.04 * cv2.arcLength(col_contour, True)
-        approx = cv2.approxPolyDP(col_contour, epsilon, True)
-        if len(approx) == 4:
-            x, y, w, h = cv2.boundingRect(approx)
-            if abs(w - target_width) < 500 and abs(h - target_height) < 500:
-                print(approx)
-                answer_block_col_count = 6
-                answer_block_row_count = 5
-                answer_block_width = w // answer_block_col_count  # Width of each smaller box
-                for i in range(answer_block_row_count):
-                    for j in range(answer_block_col_count):
-                        x1 = x + j * answer_block_width
-                        column_width = answer_block_width / 6.5
-                        gap_width = column_width / 3.5
-                        num_columns = int((answer_block_width + gap_width) // (column_width + gap_width))
-                        for col in range(1, num_columns):
-                            col_x1 = int(x1 + col * (column_width + gap_width))
-                            col_x2 = int(col_x1 + column_width)
-                            for rect in bounded_boxes:
-                                lx, ly, lw, lh = rect[0]
-                                rx, ry, rw, rh = rect[1]
+    for rect in bounded_boxes:
+        for col_index,x_cor in enumerate(ANSWERS_COL_X_COORDINATE):
+            lx, ly, lw, lh = rect[0]
+            rx, ry, rw, rh = rect[1]
 
-                                left_rect_y1 = ly
-                                left_rect_y2 = ry + rh
+            cv2.rectangle(raw_bird_eye_view_img, (lx, ly), (lx + lw, ly + lh), (255,0,255), 1)
+            cv2.rectangle(raw_bird_eye_view_img, (rx, ry), (rx + rw, ry + rh), (255,0,255), 1)
 
-                                right_rect_y1 = ly
-                                right_rect_y2 = ry + rh
+            width_coef = width / DOC_WIDTH
 
-                                rect_y1 = int((left_rect_y1 + right_rect_y1) / 2)
-                                rect_y2 = int((left_rect_y2 + right_rect_y2) / 2)
+            start_x = (x_cor * width_coef)
+            end_x = (x_cor * width_coef) + (ANSWER_COL_WIDTH * width_coef)
 
-                                detected_columns.add((col_x1, rect_y1, col_x2, rect_y2))
+            top_y = ly + col_index * ((ry - ly) / len(ANSWERS_COL_X_COORDINATE))
+            bottom_y = (ly + lh) + col_index * (((ry + rh) - (ly + lh)) / len(ANSWERS_COL_X_COORDINATE))
 
-    answered, image = get_answered(sorted(detected_columns), image)
+
+            detected_columns.add((int(start_x), int(top_y), int(end_x),int(bottom_y)))
+
+    answered, image = get_answered(sorted(detected_columns), raw_bird_eye_view_img)
 
     return answered, image
 
+def find_rectangles(binary, raw_bird_eye_view_img):
+    full_image = binary
+    height, width = binary.shape[:2]
+    width_coefficient = width / DOC_WIDTH
+    height_coefficient = height / DOC_HEIGHT
+    coefficient = (width_coefficient + height_coefficient) / 2
 
-def find_rectangles(binary):
-    # Get the image dimensions
-    height, width = binary.shape
-
-    # Define left and right regions (shrinking the detection area)
-    left_region = binary[:, :int(width * 0.08)]  # Left 6% of the image
-    right_region = binary[:, int(width * 0.92):]  # Right 6% of the image
-
-    # Create a full-sized black image (with padding)
-    full_image = np.zeros_like(binary)
-
-    # Place the left and right regions into the full-sized image
-    full_image[:, :int(width * 0.08)] = left_region  # Place left region into the full image
-    full_image[:, int(width * 0.92):] = right_region  # Place right region into the full image
-
-    cv2.imshow('full_image', full_image)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-    # Find contours in the full image (which now has the left and right regions)
     contours_rec, _ = cv2.findContours(full_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-    # Filter contours to detect rectangles within the left and right regions
     rectangles = []
     for contour in contours_rec:
         approx = cv2.approxPolyDP(contour, 0.02 * cv2.arcLength(contour, True), True)
-        if len(approx) == 4:
-            x, y, w, h = cv2.boundingRect(approx)
-            aspect_ratio = w / float(h)
-            if 0.1 < aspect_ratio < 10 < w < 100 and 10 < h < 100:
-                area = cv2.contourArea(contour)
-                if area > 500:
-                    rectangles.append((x, y, w, h))
+        bounded_boxes = cv2.boundingRect(approx)
+        x, y, w, h = bounded_boxes
+        aspect_ratio = w / float(h)
+        if aspect_ratio > 1:
+            area = cv2.contourArea(contour)
+            if (coefficient * BOUNDED_BOX_MAX_AREA) > area > 15:
+                rectangles.append((x, y, w, h))
 
-    # Sort the rectangles by their vertical position (y-coordinate)
-    rectangles = sorted(rectangles, key=lambda x: x[1])
-    rectangles = rectangles[20:120]
+    rectangles = group_tuples_by_second_value(rectangles, 25)
 
-    rects = pair_rectangles(rectangles, width)
-    return rects
+    new_rects = []
+    for rec in rectangles:
+        if len(rec) == 60:
+            rec = sorted(rec, key=lambda rec: rec[1])
+            rec = rec[10:]
+            new_rects.append(rec)
+    rectangles = list(zip(new_rects[1], new_rects[0]))
 
-
-def pair_rectangles(rectangles, image_width):
-    # Separate rectangles into left and right based on x-coordinates
-    left_rectangles = [rect for rect in rectangles if rect[0] < image_width * 0.06]
-    right_rectangles = [rect for rect in rectangles if rect[0] > image_width * 0.94]
-
-    return list(zip(left_rectangles, right_rectangles))
+    return rectangles, raw_bird_eye_view_img
 
 
 def get_answered(answers: List[Tuple[int, int, int, int]], image) -> tuple[dict[int | Any, dict[Any, Any]], Any]:
@@ -139,7 +101,7 @@ def get_answered(answers: List[Tuple[int, int, int, int]], image) -> tuple[dict[
         ROI = gray[y1:y2, x1:x2]
 
         # Threshold the ROI to identify filled areas
-        _, thresh = cv2.threshold(ROI, 200, 255, cv2.THRESH_BINARY)
+        _, thresh = cv2.threshold(ROI, 180, 255, cv2.THRESH_BINARY)
 
         if thresh is not None:
             total_pixels = thresh.size
@@ -170,16 +132,26 @@ def get_answered(answers: List[Tuple[int, int, int, int]], image) -> tuple[dict[
 
             # Draw a rectangle on the original image for visualization
             color = (0, 255, 0) if not filled else (0, 0, 255)  # Green if filled, Red otherwise
-            cv2.rectangle(image, (x1, y1), (x2, y2), color, 2)
+            cv2.rectangle(image, (x1, y1), (x2, y2), color, 1)
         else:
-            print(ROI)
-            print(thresh)
+            pass
 
     answered_questions = OrderedDict(sorted(answered_questions.items(), key=lambda x: x[0]))
 
     return answered_questions, image
 
+def group_tuples_by_second_value(tuples, tolerance):
+    groups = []
 
-def dump_result(answered_questions: List[Tuple[int, Tuple[bool, bool, bool, bool]]], file_name: str):
-    with open(f'output/{file_name}_Result.json', 'w') as file:
-        json.dump(answered_questions, file, indent=4)
+    for item in tuples:
+        added = False
+        for group in groups:
+            if abs(group[0][0] - item[0]) <= tolerance:
+                group.append(item)
+                added = True
+                break
+        if not added:
+            groups.append([item])
+
+    return groups
+

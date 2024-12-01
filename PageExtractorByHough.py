@@ -119,7 +119,7 @@ if __name__ == "__main__":
         )
     )
     # extracted = page_extractor('assets/photo_2024-11-20_12-47-14.jpg')
-    extracted = page_extractor('assets/photo_2024-11-20_17-16-00.jpg')
+    extracted = page_extractor('assets/QalamChi.jpg')
     # extracted = page_extractor('assets/QalamChi.jpg')
     denoise = Denoiser()
     ex = denoise(extracted)

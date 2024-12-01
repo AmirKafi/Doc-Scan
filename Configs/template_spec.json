@@ -1,0 +1,15 @@
+{
+  "doc_width": 1644,
+  "doc_height": 2298,
+  "gap_between_every_answer_col": 7,
+  "answer_col_width": 38,
+  "dis_between_bounded_boxes": 1582,
+  "gap_between_every_answers_block": 94,
+  "bounded_box_min_area": 100,
+  "bounded_box_max_area": 800,
+  "answers_col_x_coordinate": [
+    128,175,222,273,366,413,460,507,
+    601,648,695,743,838,886,933,980,
+    1075,1122,1170,1216,1313,1360,1407,1454
+  ]
+}
