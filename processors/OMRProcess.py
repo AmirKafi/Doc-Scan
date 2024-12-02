@@ -1,15 +1,13 @@
 import json
-import os
 from typing import List, Tuple
 
 import cv2
 import numpy as np
-import time
 
 from MarkerChecker import OMR
 from processors.ContourCornersDetector import ContourCornersDetector
 
-start = time.time()
+
 def is_bird_eye_view(image_path):
     # Load the image
     image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
@@ -51,10 +49,9 @@ def is_bird_eye_view(image_path):
 
     return True
 
-
-def get_jpg_files(files_directory):
-    return [file for file in os.listdir(files_directory) if file.endswith('.jpg')]
-
+def dump_result(answered_questions: List[Tuple[int, Tuple[bool, bool, bool, bool]]]):
+    with open('../output/questions.json', 'w') as file:
+        json.dump(answered_questions, file, indent=4)
 
 def start_process(raw_image_path):
     image = cv2.imread(raw_image_path)
@@ -68,22 +65,3 @@ def start_process(raw_image_path):
         answered_quests,image_result = OMR.start_process(image)
 
     return answered_quests, image_result
-
-def dump_result(answered_questions: List[Tuple[int, Tuple[bool, bool, bool, bool]]]):
-    with open('output/questions.json', 'w') as file:
-        json.dump(answered_questions, file, indent=4)
-
-
-# Example usage
-directory = "assets"
-images = get_jpg_files(directory)
-print(images)
-for image_name in images:
-    path = directory + "/" + image_name
-    answered,result = start_process(path)
-    dump_result(answered)
-    print(f'{image_name} is done!')
-
-end = time.time()
-
-print(end - start)

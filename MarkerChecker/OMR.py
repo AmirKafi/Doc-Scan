@@ -1,18 +1,17 @@
-import json
-import random
 from collections import OrderedDict
+from math import floor, ceil
 from typing import List, Tuple
 from typing import Set, Any
 
 import cv2
-import numpy as np
 
-from Configs.config import ANSWER_COL_WIDTH, ANSWERS_COL_X_COORDINATE, DOC_WIDTH, DOC_HEIGHT, BOUNDED_BOX_MIN_AREA, \
-    BOUNDED_BOX_MAX_AREA, DIS_BETWEEN_BOUNDED_BOXES
+from Configs.config import ANSWER_COL_WIDTH, ANSWERS_COL_X_COORDINATE, DOC_WIDTH, DOC_HEIGHT, BOUNDED_BOX_MAX_AREA, \
+    DIS_BETWEEN_BOUNDED_BOXES, DIS_TO_FIRST_BOUNDED_BOX
 
 
 def start_process(raw_bird_eye_view_img):
     # First Grayscale it
+
     gray = cv2.cvtColor(raw_bird_eye_view_img, cv2.COLOR_BGR2GRAY)
 
     # then make it binary
@@ -23,21 +22,47 @@ def start_process(raw_bird_eye_view_img):
 
     height, width = binary.shape[:2]
 
+
+
+    _,_,left_target_width,left_target_height = bounded_boxes[0][0]
+    _,_,right_target_width,right_target_height = bounded_boxes[1][0]
+    left_alignment_x = sum(rect[0][0] + rect[0][2] // 2 for rect in bounded_boxes) // len(bounded_boxes) - left_target_width // 2
+    right_alignment_x = sum(rect[1][0] + rect[1][2] // 2 for rect in bounded_boxes) // len(bounded_boxes) - right_target_width // 2
+
     # Initialize a list for detected rows within columns
     detected_columns: Set[Tuple[int, int, int, int]] = set()
     # Loop through contours to find the large rectangle
     for rect in bounded_boxes:
+        lx, ly, lw, lh = resize_bounded_boxes(rect[0],left_target_width,left_target_height,left_alignment_x)
+        rx, ry, rw, rh = resize_bounded_boxes(rect[1],right_target_width,right_target_height,right_alignment_x)
+
         for col_index,x_cor in enumerate(ANSWERS_COL_X_COORDINATE):
-            lx, ly, lw, lh = rect[0]
-            rx, ry, rw, rh = rect[1]
 
             cv2.rectangle(raw_bird_eye_view_img, (lx, ly), (lx + lw, ly + lh), (255,0,255), 1)
             cv2.rectangle(raw_bird_eye_view_img, (rx, ry), (rx + rw, ry + rh), (255,0,255), 1)
 
-            width_coef = width / DOC_WIDTH
+            if not width == DOC_WIDTH:
+                dis_between_bounded_boxes = rx - (lx + lw)
+                coef = dis_between_bounded_boxes / DIS_BETWEEN_BOUNDED_BOXES
+                width_coef =width / DOC_WIDTH
 
-            start_x = (x_cor * width_coef)
-            end_x = (x_cor * width_coef) + (ANSWER_COL_WIDTH * width_coef)
+                start = lx + lw
+
+                x_cor = x_cor - DIS_TO_FIRST_BOUNDED_BOX
+                start_x = x_cor
+                end_x = x_cor + ANSWER_COL_WIDTH
+
+                start_x = (start_x * width_coef)
+
+                end_x = (end_x * width_coef)
+
+                start_x = start_x + start
+
+                end_x = end_x + start
+            else:
+                start_x = x_cor
+                end_x = x_cor + ANSWER_COL_WIDTH
+
 
             top_y = ly + col_index * ((ry - ly) / len(ANSWERS_COL_X_COORDINATE))
             bottom_y = (ly + lh) + col_index * (((ry + rh) - (ly + lh)) / len(ANSWERS_COL_X_COORDINATE))
@@ -101,7 +126,7 @@ def get_answered(answers: List[Tuple[int, int, int, int]], image) -> tuple[dict[
         ROI = gray[y1:y2, x1:x2]
 
         # Threshold the ROI to identify filled areas
-        _, thresh = cv2.threshold(ROI, 180, 255, cv2.THRESH_BINARY)
+        _, thresh = cv2.threshold(ROI, 210, 210, cv2.THRESH_BINARY)
 
         if thresh is not None:
             total_pixels = thresh.size
@@ -109,7 +134,7 @@ def get_answered(answers: List[Tuple[int, int, int, int]], image) -> tuple[dict[
             fill_ratio = white_pixels / total_pixels
 
             # Define threshold to determine if it's filled
-            filled = fill_ratio < 0.5  # Adjust the threshold as needed
+            filled = fill_ratio < 0.7  # Adjust the threshold as needed
 
             if col == 6 and not temp_answers:
                 col = 0
@@ -155,3 +180,9 @@ def group_tuples_by_second_value(tuples, tolerance):
 
     return groups
 
+def resize_bounded_boxes(rect,target_w,target_h,alignment_x):
+    x,y,w,h = rect
+    x = int(alignment_x + (w - target_w) / 2)
+    y = int(y + (h - target_h) / 2)
+
+    return x,y,target_w,target_h
