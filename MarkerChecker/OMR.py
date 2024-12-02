@@ -22,19 +22,12 @@ def start_process(raw_bird_eye_view_img):
 
     height, width = binary.shape[:2]
 
-
-
-    _,_,left_target_width,left_target_height = bounded_boxes[0][0]
-    _,_,right_target_width,right_target_height = bounded_boxes[1][0]
-    left_alignment_x = sum(rect[0][0] + rect[0][2] // 2 for rect in bounded_boxes) // len(bounded_boxes) - left_target_width // 2
-    right_alignment_x = sum(rect[1][0] + rect[1][2] // 2 for rect in bounded_boxes) // len(bounded_boxes) - right_target_width // 2
-
     # Initialize a list for detected rows within columns
     detected_columns: Set[Tuple[int, int, int, int]] = set()
     # Loop through contours to find the large rectangle
     for rect in bounded_boxes:
-        lx, ly, lw, lh = resize_bounded_boxes(rect[0],left_target_width,left_target_height,left_alignment_x)
-        rx, ry, rw, rh = resize_bounded_boxes(rect[1],right_target_width,right_target_height,right_alignment_x)
+        lx, ly, lw, lh = rect[0]
+        rx, ry, rw, rh = rect[1]
 
         for col_index,x_cor in enumerate(ANSWERS_COL_X_COORDINATE):
 
@@ -97,9 +90,16 @@ def find_rectangles(binary, raw_bird_eye_view_img):
     rectangles = group_tuples_by_second_value(rectangles, 25)
 
     new_rects = []
+
+    _, _, target_width, target_height = rectangles[0][0]
+
     for rec in rectangles:
         if len(rec) == 60:
-            rec = sorted(rec, key=lambda rec: rec[1])
+            alignment_x = sum(rect[0] + rect[2] // 2 for rect in rec) // len(
+                rec) - target_width // 2
+            rec = resize_bounded_boxes(rec,target_width,target_height,alignment_x)
+            print(rec)
+            rec = sorted(rec, key=lambda y: y[1])
             rec = rec[10:]
             new_rects.append(rec)
     rectangles = list(zip(new_rects[1], new_rects[0]))
@@ -180,9 +180,12 @@ def group_tuples_by_second_value(tuples, tolerance):
 
     return groups
 
-def resize_bounded_boxes(rect,target_w,target_h,alignment_x):
-    x,y,w,h = rect
-    x = int(alignment_x + (w - target_w) / 2)
-    y = int(y + (h - target_h) / 2)
+def resize_bounded_boxes(bound_boxes,target_w,target_h,alignment_x):
+    resized_bounded_boxes = []
+    for box in bound_boxes:
+        x, y, w, h = box
+        x = int(alignment_x + (w - target_w) / 2)
+        y = int(y + (h - target_h) / 2)
+        resized_bounded_boxes.append((x, y, target_w, target_h))
 
-    return x,y,target_w,target_h
+    return resized_bounded_boxes

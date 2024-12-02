@@ -1,7 +1,10 @@
-import fastapi
+import cv2
 
-app = fastapi.FastAPI()
+from processors.ContourCornersDetector import ContourCornersDetector
 
-@app.post('OMR')
-def omr_process():
-    pass
+contour = ContourCornersDetector()
+
+image = cv2.imread('assets/QalamChi.jpg')
+result = contour(image)
+
+cv2.imwrite('output/QalamChi.jpg', result)
