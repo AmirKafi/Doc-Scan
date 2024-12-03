@@ -1,27 +1,18 @@
 {
   "doc_width": 1644,
-  "doc_height": 2298,
-  "gap_between_every_answer_col": 7,
-  "answer_col_width": 39,
-  "dis_between_bounded_boxes": 1582,
+  "doc_height": 2299,
+  "gap_between_every_answer_col": 5,
+  "answer_col_width": 42,
+  "dis_between_bounded_boxes": 1500,
   "gap_between_every_answers_block": 96,
-  "bounded_box_min_area": 100,
   "bounded_box_max_area": 800,
-  "dis_to_first_bounded_box": 76,
+  "dis_to_first_bounded_box": 35,
   "answers_col_x_coordinate": [
     128,175,223,269,
-    366,412,460,507,
-    602,648,696,743,
-    839,886,933,980,
+    366,413,461,508,
+    602,649,696,743,
+    839,886,934,980,
     1076,1123,1170,1217,
-    1314,1361,1408,1455
-  ],
-  "answers_col_x_coordinate2": [
-    128,174,220,266,
-    365,411,457,503,
-    584,630,676,722,
-    805,851,897,943,
-    1030,1076,1122,1168,
-    1250,1296,1342,1388
+    1313,1360,1407,1454
   ]
 }
