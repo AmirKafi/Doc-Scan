@@ -1,4 +1,6 @@
 import json
+import os
+from pathlib import Path
 from typing import List, Tuple
 
 import cv2
@@ -50,7 +52,9 @@ def is_bird_eye_view(image_path):
     return True
 
 def dump_result(answered_questions: List[Tuple[int, Tuple[bool, bool, bool, bool]]]):
-    with open('../output/questions.json', 'w') as file:
+    base_root = Path(__file__).resolve().parent.parent
+    print(os.path.join(base_root,'output/questions.json'))
+    with open(os.path.join(base_root,'./output/questions.json'), 'w') as file:
         json.dump(answered_questions, file, indent=4)
 
 def start_process(raw_image_path):

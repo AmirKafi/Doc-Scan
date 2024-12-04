@@ -6,6 +6,7 @@
   "dis_between_bounded_boxes": 1500,
   "gap_between_every_answers_block": 96,
   "bounded_box_max_area": 800,
+  "bounded_box_min_area": 25,
   "dis_to_first_bounded_box": 35,
   "answers_col_x_coordinate": [
     128,175,223,269,

@@ -6,7 +6,7 @@ from typing import Set, Any
 import cv2
 
 from Configs.config import ANSWER_COL_WIDTH, ANSWERS_COL_X_COORDINATE, DOC_WIDTH, DOC_HEIGHT, BOUNDED_BOX_MAX_AREA, \
-    DIS_BETWEEN_BOUNDED_BOXES, DIS_TO_FIRST_BOUNDED_BOX
+    DIS_BETWEEN_BOUNDED_BOXES, DIS_TO_FIRST_BOUNDED_BOX, BOUNDED_BOX_MIN_AREA
 
 
 def start_process(raw_bird_eye_view_img):
@@ -80,20 +80,23 @@ def find_rectangles(binary, raw_bird_eye_view_img):
         aspect_ratio = w / float(h)
         if aspect_ratio > 1:
             area = cv2.contourArea(contour)
-            if (coefficient * BOUNDED_BOX_MAX_AREA) > area > 15:
+            if (coefficient * BOUNDED_BOX_MAX_AREA) > area > (coefficient * BOUNDED_BOX_MIN_AREA):
                 rectangles.append((x, y, w, h))
 
-    rectangles = group_tuples_by_second_value(rectangles, 25)
+    rectangles = group_tuples_by_second_value(rectangles, 20)
 
     new_rects = []
     _,_,target_width,target_height = rectangles[0][0]
     for rec in rectangles:
+        print(rec)
+        print(len(rec))
         if len(rec) == 60:
             rec = resize_bounded_boxes(rec)
             rec = sorted(rec, key=lambda rec: rec[1])
             rec = rec[10:]
             new_rects.append(rec)
     rectangles = list(zip(new_rects[1], new_rects[0]))
+
 
     return rectangles, raw_bird_eye_view_img
 
@@ -121,19 +124,12 @@ def get_answered(answers: List[Tuple[int, int, int, int]], image) -> tuple[dict[
 
         # Convert back to BGR
         shadow_corrected = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
-        cv2.imshow('shadow', shadow_corrected)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
 
         # Extract the Region of Interest (ROI)
-        ROI = shadow_corrected[y1:y2, x1:x2]
-
-        cv2.imshow('ROI', ROI)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        ROI = gray[y1:y2, x1:x2]
 
         # Threshold the ROI to identify filled areas
-        _, thresh = cv2.threshold(ROI, 210, 255, cv2.THRESH_BINARY)
+        _, thresh = cv2.threshold(ROI, 120, 255, cv2.THRESH_BINARY)
 
         if thresh is not None:
             total_pixels = thresh.size

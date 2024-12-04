@@ -12,6 +12,7 @@ class ContourCornersDetector:
 
 
         self.org_img = image.copy()
+
         # Make a copy and send the copy through process
         processed_img = image
 
