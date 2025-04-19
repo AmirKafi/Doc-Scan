@@ -1,15 +1,24 @@
+import os
+
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import StreamingResponse
 import cv2
 import numpy as np
+from starlette.staticfiles import StaticFiles
+
 from processors.ContourCornersDetector import ContourCornersDetector
 import io
-from starlette.responses import Response
+from starlette.responses import Response, FileResponse
 
 contour_page_extractor = ContourCornersDetector()
 
 app = FastAPI()
 
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return FileResponse(os.path.join("static", "favicon.ico"))
 
 @app.post("/process-image")
 async def process_image(file: UploadFile = File(...)):
